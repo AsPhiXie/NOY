@@ -63,7 +63,6 @@ static void SwapELFSectionHeader (Elf32_Shdr *shdr);
 //----------------------------------------------------------------------
 AddrSpace::AddrSpace(OpenFile * exec_file, Process *p, int *err)
 {
-#ifdef ETUDIANTS_TP
   Elf32_Ehdr elfHdr;      // Header du fichier exécutable
 
   *err  = 0;
