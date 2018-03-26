@@ -90,8 +90,7 @@ AddrSpace::AddrSpace(OpenFile * exec_file, Process *p, int *err)
 
   /* Retrived the contents of section table*/
   Elf32_Shdr section_table[elfHdr.e_shnum*sizeof(elfHdr)];
-  exec_file->ReadAt((char *) section_table, elfHdr.e_shnum*sizeof(elfHdr),
-		    elfHdr.e_shoff);
+  exec_file->ReadAt((char *) section_table, elfHdr.e_shnum*sizeof(elfHdr),elfHdr.e_shoff);
   /* Swap the section header */
   int i;
   for (i = 0 ; i < elfHdr.e_shnum ; i++)
@@ -100,8 +99,7 @@ AddrSpace::AddrSpace(OpenFile * exec_file, Process *p, int *err)
   /* Retrieve the section containing section names */
   Elf32_Shdr * shname_section = & section_table[elfHdr.e_shstrndx];
   char *shnames = new char[shname_section->sh_size];
-  exec_file->ReadAt(shnames, shname_section->sh_size,
-		    shname_section->sh_offset);
+  exec_file->ReadAt(shnames, shname_section->sh_size,shname_section->sh_offset);
 
   // Create an empty translation table
   translationTable = new TranslationTable();
@@ -115,8 +113,7 @@ AddrSpace::AddrSpace(OpenFile * exec_file, Process *p, int *err)
 	continue;
       int section_topaddr = section_table[i].sh_addr
                     + section_table[i].sh_size;
-      if ((section_table[i].sh_flags & SHF_ALLOC)
-	  && (section_topaddr > mem_topaddr))
+      if ((section_table[i].sh_flags & SHF_ALLOC) && (section_topaddr > mem_topaddr))
 	mem_topaddr = section_topaddr;
     }
 
@@ -125,8 +122,7 @@ AddrSpace::AddrSpace(OpenFile * exec_file, Process *p, int *err)
   // Make sure this region really starts at virtual address 0
   ASSERT(base_addr == 0);
 
-  DEBUG('a', (char*)"Allocated virtual area [0x0,0x%x[ for program\n",
-	mem_topaddr);
+  DEBUG('a', (char*)"Allocated virtual area [0x0,0x%x[ for program\n", mem_topaddr);
 
   // Loading of all sections
   for (i = 0 ; i < elfHdr.e_shnum ; i++)
@@ -134,8 +130,7 @@ AddrSpace::AddrSpace(OpenFile * exec_file, Process *p, int *err)
       // Retrieve the section name
       const char *section_name = shnames + section_table[i].sh_name;
 
-      DEBUG('a', (char*)"Section %d : size=0x%x name=\"%s\"\n",
-	     i, section_table[i].sh_size, section_name);
+      DEBUG('a', (char*)"Section %d : size=0x%x name=\"%s\"\n", i, section_table[i].sh_size, section_name);
 
       // Ignore empty sections
       if (section_table[i].sh_size <= 0)
@@ -210,8 +205,12 @@ AddrSpace::AddrSpace(OpenFile * exec_file, Process *p, int *err)
 	  translationTable->setAddrDisk(virt_page,-1);
 
 	  // The entry is valid
+	  #ifndef ETUDIANTS_TP
 	  translationTable->setBitValid(virt_page);
-	  
+	  #endif
+	  #ifdef ETUDIANTS_TP
+	  translationTable->clearBitValid(virt_page);
+	  #endif
 	  /* End of code without demand paging */
 	}
     }

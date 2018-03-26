@@ -41,9 +41,18 @@ PageFaultManager::~PageFaultManager() {
 */  
 ExceptionType PageFaultManager::PageFault(uint32_t virtualPage) 
 {
-  printf("**** Warning: page fault manager is not implemented yet\n");
-    exit(-1);
-    return ((ExceptionType)0);
+	char* bufSwap ;
+  int bitSwap = g_machine->mmu->translationTable->getBitSwap(virtualPage);
+  int addrDisk = g_machine->mmu->translationTable->getAddrDisk(virtualPage);
+  if(bitSwap == 1){
+  	while(addrDisk ==-1){;}
+  	g_swap_manager->GetPageSwap(addrDisk, bufSwap);
+  }
+  else if(bitSwap == 0 && addrDisk==-1){
+  }
+  else if(bitSwap == 0 && addrDisk != -1){
+  }
+  return ((ExceptionType)0);
 }
 
 
