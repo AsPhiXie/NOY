@@ -39,20 +39,30 @@ PageFaultManager::~PageFaultManager() {
 //        page mapped to something [code/data/bss/...])
 //	\return the exception (generally the NO_EXCEPTION constant)
 */  
-ExceptionType PageFaultManager::PageFault(uint32_t virtualPage) 
-{
-	char* bufSwap ;
-  int bitSwap = g_machine->mmu->translationTable->getBitSwap(virtualPage);
-  int addrDisk = g_machine->mmu->translationTable->getAddrDisk(virtualPage);
-  if(bitSwap == 1){
-  	while(addrDisk ==-1){;}
-  	g_swap_manager->GetPageSwap(addrDisk, bufSwap);
-  }
-  else if(bitSwap == 0 && addrDisk==-1){
-  }
-  else if(bitSwap == 0 && addrDisk != -1){
-  }
-  return ((ExceptionType)0);
+ExceptionType PageFaultManager::PageFault(uint32_t virtualPage) {
+	int taillePage = g_cfg->PageSize;
+	char bufSwap[128];
+  	int bitSwap = g_machine->mmu->translationTable->getBitSwap(virtualPage);
+  	int addrDisk = g_machine->mmu->translationTable->getAddrDisk(virtualPage);
+  	int pageReel = g_physical_mem_manager->AddPhysicalToVirtualMapping(g_current_thread->GetProcessOwner()->addrspace, virtualPage);
+  	if(bitSwap == 1){
+  		while(addrDisk ==-1){;}
+  		g_swap_manager->GetPageSwap(addrDisk, bufSwap);
+  		g_physical_mem_manager->UnlockPage(pageReel);
+  		memcpy((void*)g_machine->mainMemory[pageReel* taillePage], bufSwap, taillePage);
+  	}
+  	else if(bitSwap == 0 && addrDisk==-1){
+  		g_physical_mem_manager->UnlockPage(pageReel);
+  		/*bzero(bufSwap, taillePage);
+  		g_machine->mainMemory[pageReel* taillePage] = bufSwap;*/
+  		bzero((void*)g_machine->mainMemory[pageReel* taillePage], taillePage);
+  	}
+  	else if(bitSwap == 0 && addrDisk != -1){
+  		OpenFile* file = g_current_thread->GetProcessOwner()->exec_file;
+  		int BytesLu = file->ReadAt(bufSwap, taillePage, addrDisk);
+  		memcpy((void*)g_machine->mainMemory[pageReel* taillePage], bufSwap, taillePage);
+  	}
+  	return NO_EXCEPTION;
 }
 
 

@@ -118,11 +118,27 @@ void PhysicalMemManager::ChangeOwner(long numPage, Thread* owner) {
 //  \return A new physical page number.
 */
 //-----------------------------------------------------------------
-int PhysicalMemManager::AddPhysicalToVirtualMapping(AddrSpace* owner,int virtualPage) 
-{
+int PhysicalMemManager::AddPhysicalToVirtualMapping(AddrSpace* owner,int virtualPage) {
+	#ifdef ETUDIANTS_TP
+		int taillePage = g_cfg->PageSize;
+		int PageReel = this->FindFreePage();
+		if(PageReel == -1){
+			PageReel = this->EvictPage();
+		} 
+		this->tpr[PageReel].locked = true;
+		this->tpr[PageReel].virtualPage = virtualPage;
+		this->tpr[PageReel].owner = owner;
+		
+		g_machine->mmu->translationTable->setPhysicalPage(virtualPage, PageReel);
+		g_machine->mmu->translationTable->setBitValid(virtualPage);
+		return PageReel;
+		
+	#endif
+	#ifndef ETUDANTS_TP
   printf("**** Warning: function AddPhysicalToVirtualMapping is not implemented\n");
   exit(-1);
   return (0);
+  #endif
 }
 
 //-----------------------------------------------------------------
@@ -166,9 +182,13 @@ int PhysicalMemManager::FindFreePage() {
 */
 //-----------------------------------------------------------------
 int PhysicalMemManager::EvictPage() {
+	#ifdef ETUDIANTS_TP
+	//for(int i =0 ; i < g_cfg->NumPhysPage; i++){
+	#endif
+	#ifndef ETUDIANTS_TP
   printf("**** Warning: page replacement algorithm is not implemented yet\n");
     exit(-1);
-    return (0);
+  #endif
 }
 
 //-----------------------------------------------------------------
