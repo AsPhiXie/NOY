@@ -124,7 +124,8 @@ int PhysicalMemManager::AddPhysicalToVirtualMapping(AddrSpace* owner,int virtual
 		int PageReel = this->FindFreePage();
 		if(PageReel == -1){
 			PageReel = this->EvictPage();
-		} 
+		}
+		printf("pageReel = %x\n", PageReel);
 		this->tpr[PageReel].locked = true;
 		this->tpr[PageReel].virtualPage = virtualPage;
 		this->tpr[PageReel].owner = owner;
@@ -183,7 +184,43 @@ int PhysicalMemManager::FindFreePage() {
 //-----------------------------------------------------------------
 int PhysicalMemManager::EvictPage() {
 	#ifdef ETUDIANTS_TP
-	//for(int i =0 ; i < g_cfg->NumPhysPage; i++){
+	printf("/**********************************************************************/\n");
+	static int i = 0;
+	int taillePage = g_cfg->PageSize;
+	AddrSpace* addrSpaceLocal = g_current_thread->GetProcessOwner()->addrspace;
+	int result;
+	//1er tour de table
+	int boolean = 1;
+	while(boolean) {
+		AddrSpace* addrSpace = tpr[i].owner;
+		TranslationTable* transTabDei = tpr[i].owner->translationTable;
+		if(&addrSpace != &addrSpaceLocal) {
+			//On met les bits U à 0 si ils sont égales à 1
+			if(transTabDei->getBitU(tpr[i].virtualPage) == 1) {
+				transTabDei->clearBitU(tpr[i].virtualPage);
+			}
+			else if(transTabDei->getBitU(tpr[i].virtualPage) == 0 && tpr[i].locked == false) {
+				tpr[i].locked = true;
+				tpr[i].owner = g_current_thread->GetProcessOwner()->addrspace;
+				if(transTabDei->getBitM(tpr[i].virtualPage) == 1) {
+					if(transTabDei->getBitSwap(tpr[i].virtualPage) == 1) {
+						g_swap_manager->PutPageSwap(transTabDei->getAddrDisk(tpr[i].virtualPage), (char*)&g_machine->mainMemory[i*taillePage]);
+					}
+					else {
+						int addrDisk = g_swap_manager->PutPageSwap(-1, (char*)&g_machine->mainMemory[i*taillePage]);
+						printf("addrDisk = %d\n", addrDisk);
+						transTabDei->setAddrDisk(tpr[i].virtualPage, addrDisk);
+					}
+					transTabDei->clearBitValid(tpr[i].virtualPage);
+				}
+				boolean = 0;
+			}
+		}
+		result = i;
+		i++;
+		i = i%g_cfg->NumPhysPages;
+	}
+	return result;
 	#endif
 	#ifndef ETUDIANTS_TP
   printf("**** Warning: page replacement algorithm is not implemented yet\n");

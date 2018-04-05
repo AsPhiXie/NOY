@@ -159,7 +159,6 @@ AddrSpace::AddrSpace(OpenFile * exec_file, Process *p, int *err)
 	   pgdisk < divRoundUp(section_table[i].sh_size, g_cfg->PageSize) ;
 	   pgdisk++, virt_page ++)
 	{
-
 	  /* Without demand paging */
 	  
 	  // Set up default values for the page table entry
@@ -171,7 +170,7 @@ AddrSpace::AddrSpace(OpenFile * exec_file, Process *p, int *err)
 	  translationTable->clearBitIo(virt_page);
 
 	  // Get a page in physical memory, halt of there is not sufficient space
-	  int pp = g_physical_mem_manager->FindFreePage();
+	 /* int pp = g_physical_mem_manager->FindFreePage();
 	  if (pp == -1) { 
 	    printf("Not enough free space to load program %s\n",
 		   exec_file->GetName());
@@ -190,7 +189,7 @@ AddrSpace::AddrSpace(OpenFile * exec_file, Process *p, int *err)
 	    // The section has an image in the executable file
 	    // Read it from the disk
 	    exec_file->ReadAt((char *)&(g_machine->mainMemory[translationTable->getPhysicalPage(virt_page)*g_cfg->PageSize]),g_cfg->PageSize, section_table[i].sh_offset + pgdisk*g_cfg->PageSize);
-		translationTable->setAddrDisk(virt_page, g_machine->mainMemory[translationTable->getPhysicalPage(virt_page)*g_cfg->PageSize]);
+		//translationTable->setAddrDisk(virt_page, g_machine->mainMemory[translationTable->getPhysicalPage(virt_page)*g_cfg->PageSize]); ajouter par nous
 
 	  }
 	  else {
@@ -198,7 +197,7 @@ AddrSpace::AddrSpace(OpenFile * exec_file, Process *p, int *err)
 	    // Fill it with zeroes
 	    memset(&(g_machine->mainMemory[translationTable->getPhysicalPage(virt_page)*g_cfg->PageSize]),
 		   0, g_cfg->PageSize);
-	  }
+	  }*/
 	  
 	  // The page has been loded in physical memory but
 	  // later-on will be saved in the swap disk. We have to indicate this
@@ -211,6 +210,14 @@ AddrSpace::AddrSpace(OpenFile * exec_file, Process *p, int *err)
 	  #endif
 	  #ifdef ETUDIANTS_TP
 	  translationTable->clearBitValid(virt_page);
+	  if (section_table[i].sh_type != SHT_NOBITS) {
+	  	translationTable->setAddrDisk(virt_page, section_table[i].sh_offset + pgdisk*g_cfg->PageSize);
+	  	//printf("addrDisk = %x\n", section_table[i].sh_offset + pgdisk*g_cfg->PageSize);
+	  }
+	  else {
+	  	memset(&(g_machine->mainMemory[translationTable->getPhysicalPage(virt_page)*g_cfg->PageSize]),
+		   0, g_cfg->PageSize);
+	  }
 	  #endif
 	  /* End of code without demand paging */
 	}

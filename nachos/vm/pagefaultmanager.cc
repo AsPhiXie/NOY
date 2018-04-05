@@ -49,18 +49,18 @@ ExceptionType PageFaultManager::PageFault(uint32_t virtualPage) {
   		while(addrDisk ==-1){;}
   		g_swap_manager->GetPageSwap(addrDisk, bufSwap);
   		g_physical_mem_manager->UnlockPage(pageReel);
-  		memcpy((void*)g_machine->mainMemory[pageReel* taillePage], bufSwap, taillePage);
+  		memcpy(&g_machine->mainMemory[pageReel* taillePage], bufSwap, taillePage);
   	}
   	else if(bitSwap == 0 && addrDisk==-1){
   		g_physical_mem_manager->UnlockPage(pageReel);
   		/*bzero(bufSwap, taillePage);
   		g_machine->mainMemory[pageReel* taillePage] = bufSwap;*/
-  		bzero((void*)g_machine->mainMemory[pageReel* taillePage], taillePage);
+  		bzero(&g_machine->mainMemory[pageReel* taillePage], taillePage);
   	}
   	else if(bitSwap == 0 && addrDisk != -1){
   		OpenFile* file = g_current_thread->GetProcessOwner()->exec_file;
   		int BytesLu = file->ReadAt(bufSwap, taillePage, addrDisk);
-  		memcpy((void*)g_machine->mainMemory[pageReel* taillePage], bufSwap, taillePage);
+  		memcpy(&g_machine->mainMemory[pageReel* taillePage], bufSwap, BytesLu);
   	}
   	return NO_EXCEPTION;
 }

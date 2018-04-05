@@ -100,17 +100,16 @@ Thread::~Thread()
 */
 //----------------------------------------------------------------------
 int Thread::Start(Process *owner, int32_t func, int arg) {
-	this -> process = owner;
-    this -> process -> numThreads++;
+	this->process = owner;
+    this->process->numThreads++;
 
-    this -> stackPointer = this -> process -> addrspace -> StackAllocate();
+    this->stackPointer = this->process->addrspace->StackAllocate();
     int8_t *base_stack_addr = AllocBoundedArray(SIMULATORSTACKSIZE);
+    this->InitSimulatorContext(base_stack_addr, SIMULATORSTACKSIZE);
+    this->InitThreadContext(func, this->stackPointer, arg);
 
-    this -> InitSimulatorContext(base_stack_addr, SIMULATORSTACKSIZE);
-    this -> InitThreadContext(func, this -> stackPointer, arg);
-
-    g_alive -> Append(this);
-    g_scheduler -> ReadyToRun(this);
+    g_alive->Append(this);
+    g_scheduler->ReadyToRun(this);
 	return NO_ERROR;
 	/*ASSERT(process == NULL);
 	this->process = owner;
