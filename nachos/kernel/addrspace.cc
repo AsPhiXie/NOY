@@ -155,7 +155,7 @@ AddrSpace::AddrSpace(OpenFile * exec_file, Process *p, int *err)
       // Initializes the page table entries and loads the section
       // in memory (demand paging will be implemented later on)
       for (unsigned int pgdisk = 0,
-	     virt_page = section_table[i].sh_addr / g_cfg->PageSize ;
+	     virt_page = section_table[i].sh_addr / g_cfg->PageSize;
 	   pgdisk < divRoundUp(section_table[i].sh_size, g_cfg->PageSize) ;
 	   pgdisk++, virt_page ++)
 	{
@@ -215,8 +215,7 @@ AddrSpace::AddrSpace(OpenFile * exec_file, Process *p, int *err)
 	  	//printf("addrDisk = %x\n", section_table[i].sh_offset + pgdisk*g_cfg->PageSize);
 	  }
 	  else {
-	  	memset(&(g_machine->mainMemory[translationTable->getPhysicalPage(virt_page)*g_cfg->PageSize]),
-		   0, g_cfg->PageSize);
+	  	memset(&(g_machine->mainMemory[translationTable->getPhysicalPage(virt_page)*g_cfg->PageSize]), 0, g_cfg->PageSize);
 	  }
 	  #endif
 	  /* End of code without demand paging */

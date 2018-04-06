@@ -131,6 +131,7 @@ int PhysicalMemManager::AddPhysicalToVirtualMapping(AddrSpace* owner,int virtual
 		this->tpr[PageReel].owner = owner;
 		
 		g_machine->mmu->translationTable->setPhysicalPage(virtualPage, PageReel);
+		//printf("getpp = %d\n", g_machine->mmu->translationTable->getPhysicalPage(virtualPage));
 		g_machine->mmu->translationTable->setBitValid(virtualPage);
 		return PageReel;
 		
@@ -189,13 +190,14 @@ int PhysicalMemManager::EvictPage() {
 		this->i_clock = 0;
 	}
 	int local_i_clock = this->i_clock;
+	/*printf("Dans thread = %s\n", g_current_thread->GetName());
 	printf("i_clock = %d\n", this->i_clock);
-	printf("local_i_clock = %d\n", local_i_clock);
+	printf("local_i_clock = %d\n", local_i_clock);*/
 	int compteurLockedPage = 0;
 	int compteurtourDeBoucle = 0;
 	int taillePage = g_cfg->PageSize;
 	AddrSpace* addrSpaceLocal = g_current_thread->GetProcessOwner()->addrspace;
-	int result;
+	int result = 0;
 	AddrSpace* addrSpace = tpr[local_i_clock].owner;
 	TranslationTable* transTabDei = tpr[local_i_clock].owner->translationTable;
 	//1er tour de table
@@ -232,14 +234,13 @@ int PhysicalMemManager::EvictPage() {
 		result = local_i_clock;
 		local_i_clock++;
 		local_i_clock = local_i_clock%g_cfg->NumPhysPages;
+		//printf("local_i_clock = %d\n", local_i_clock);
 		this->i_clock = local_i_clock;
 		if(local_i_clock == 0) {
 			compteurtourDeBoucle++;
 		}
 	}
-	
 	transTabDei->clearBitValid(tpr[result].virtualPage);
-	//printf("fin de fct\n");
 	return result;
 	#endif
 	#ifndef ETUDIANTS_TP

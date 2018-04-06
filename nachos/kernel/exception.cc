@@ -627,7 +627,7 @@ void ExceptionHandler(ExceptionType exceptiontype, int vaddr)
    break;
  }
  /*****************************************************************************/
- /*								               SEMAPHORE					  */
+ /*								               		SEMAPHORE					  											*/
  /*****************************************************************************/
  case SC_SEM_CREATE: {
    DEBUG('e', (char*)"Noyau: Appel à Sem_Create().\n");
@@ -723,7 +723,7 @@ void ExceptionHandler(ExceptionType exceptiontype, int vaddr)
    break;
  }
  /*****************************************************************************/
- /*							LOCK					  						  */
+ /*																			LOCK					  						  				*/
  /*****************************************************************************/
  case SC_LOCK_CREATE:{
    DEBUG('e', (char*)"Noyau: Appel à Lock_Create.\n");
@@ -808,7 +808,7 @@ void ExceptionHandler(ExceptionType exceptiontype, int vaddr)
    break;
  }
  /****************************************************************************/
- /*								  CONDITION					 				 */
+ /*								 									CONDITION					 				 							 */
  /****************************************************************************/
  case SC_COND_CREATE:{
    DEBUG('e', (char*)"Noyau: Appel à Condition().\n");
@@ -913,6 +913,31 @@ void ExceptionHandler(ExceptionType exceptiontype, int vaddr)
    }
    break;
  }
+ /*********************************************************************************/
+ /*																				MMAP											  						*/
+ /*********************************************************************************/
+ 	case SC_MMAP: {
+ 		DEBUG('e', (char*)"Exception: Mmap.\n");
+ 		OpenFileId openFileId = g_machine->ReadIntRegister(4);
+    int size = g_machine->ReadIntRegister(5);
+    if(openFileId != NULL) {
+    	OpenFile* openF = (OpenFile*) g_object_ids->SearchObject(openFileId);
+    	if(openF && openF->type == FILE_TYPE) {
+    		g_current_thread->GetProcessOwner()->addrspace->Mmap(openF, size);
+    		g_machine->WriteIntRegister(2,0);
+       	g_syscall_error->SetMsg((char*)"",NO_ERROR);
+    	}
+    	else {
+    		g_machine->WriteIntRegister(2,ERROR);
+       	g_syscall_error->SetMsg((char*)"",INVALID_MMAP);
+    	}
+    }
+    else {
+    	g_machine->WriteIntRegister(2,ERROR);
+      g_syscall_error->SetMsg((char*)"",INVALID_MMAP);
+    }
+ 		break;
+ 	}
 
       default:
         printf("Invalid system call number : %d\n", type);

@@ -3,7 +3,7 @@
 
 #define SIZE 3
 
-int buffer[SIZE];
+int buffer[10];
 //int compteur = 500;
 
 SemId vide;
@@ -11,11 +11,11 @@ SemId plein;
 
 void producteur() {
   int i = 0;
-  while(1) {
+  while(i < 10) {
     P(vide);
-    if(i == 3) {
+    /*if(i == 3) {
       i = i%3;
-    }
+    }*/
     buffer[i] = 1;
     i++;
     V(plein);
@@ -24,11 +24,11 @@ void producteur() {
 
 void consommateur() {
   int j = 0;
-  while(1) {
+  while(j < 10) {
     P(plein);
-    if(j == 3) {
+   /* if(j == 3) {
       j = j%3;
-    }
+    }*/
     buffer[j] = 0;
     j++;
     V(vide);
