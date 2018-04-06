@@ -45,6 +45,12 @@ ExceptionType PageFaultManager::PageFault(uint32_t virtualPage) {
   	int bitSwap = g_machine->mmu->translationTable->getBitSwap(virtualPage);
   	int addrDisk = g_machine->mmu->translationTable->getAddrDisk(virtualPage);
   	int pageReel = g_physical_mem_manager->AddPhysicalToVirtualMapping(g_current_thread->GetProcessOwner()->addrspace, virtualPage);
+  	int bitIO = g_machine->mmu->translationTable->getBitIo(virtualPage);
+	while(bitIO == 1) {
+		g_current_thread->Yield();
+		bitIO = g_machine->mmu->translationTable->getBitIo(virtualPage);
+	}
+	g_machine->mmu->translationTable->setBitIo(virtualPage);
   	if(bitSwap == 1){
   		while(addrDisk ==-1){;}
   		g_swap_manager->GetPageSwap(addrDisk, bufSwap);
@@ -53,18 +59,15 @@ ExceptionType PageFaultManager::PageFault(uint32_t virtualPage) {
   	}
   	else if(bitSwap == 0 && addrDisk==-1){
   		g_physical_mem_manager->UnlockPage(pageReel);
-  		/*bzero(bufSwap, taillePage);
-  		g_machine->mainMemory[pageReel* taillePage] = bufSwap;*/
   		bzero(&g_machine->mainMemory[pageReel* taillePage], taillePage);
   	}
   	else if(bitSwap == 0 && addrDisk != -1){
   		OpenFile* file = g_current_thread->GetProcessOwner()->exec_file;
   		int BytesLu = file->ReadAt(bufSwap, taillePage, addrDisk);
   		memcpy(&g_machine->mainMemory[pageReel* taillePage], bufSwap, BytesLu);
+  		g_physical_mem_manager->UnlockPage(pageReel);
   	}
+  	g_machine->mmu->translationTable->clearBitIo(virtualPage);
   	return NO_EXCEPTION;
 }
-
-
-
 

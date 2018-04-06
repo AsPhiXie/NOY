@@ -124,8 +124,8 @@ int PhysicalMemManager::AddPhysicalToVirtualMapping(AddrSpace* owner,int virtual
 		int PageReel = this->FindFreePage();
 		if(PageReel == -1){
 			PageReel = this->EvictPage();
+			//printf("pageReel = %x\n", PageReel);
 		}
-		printf("pageReel = %x\n", PageReel);
 		this->tpr[PageReel].locked = true;
 		this->tpr[PageReel].virtualPage = virtualPage;
 		this->tpr[PageReel].owner = owner;
@@ -184,42 +184,62 @@ int PhysicalMemManager::FindFreePage() {
 //-----------------------------------------------------------------
 int PhysicalMemManager::EvictPage() {
 	#ifdef ETUDIANTS_TP
-	printf("/**********************************************************************/\n");
-	static int i = 0;
+	//printf("/**********************************************************************/\n");
+	if(this->i_clock == -1){
+		this->i_clock = 0;
+	}
+	int local_i_clock = this->i_clock;
+	printf("i_clock = %d\n", this->i_clock);
+	printf("local_i_clock = %d\n", local_i_clock);
+	int compteurLockedPage = 0;
+	int compteurtourDeBoucle = 0;
 	int taillePage = g_cfg->PageSize;
 	AddrSpace* addrSpaceLocal = g_current_thread->GetProcessOwner()->addrspace;
 	int result;
+	AddrSpace* addrSpace = tpr[local_i_clock].owner;
+	TranslationTable* transTabDei = tpr[local_i_clock].owner->translationTable;
 	//1er tour de table
 	int boolean = 1;
 	while(boolean) {
-		AddrSpace* addrSpace = tpr[i].owner;
-		TranslationTable* transTabDei = tpr[i].owner->translationTable;
 		if(&addrSpace != &addrSpaceLocal) {
 			//On met les bits U à 0 si ils sont égales à 1
-			if(transTabDei->getBitU(tpr[i].virtualPage) == 1) {
-				transTabDei->clearBitU(tpr[i].virtualPage);
+			if(transTabDei->getBitU(tpr[local_i_clock].virtualPage) == 1) {
+				transTabDei->clearBitU(tpr[local_i_clock].virtualPage);
 			}
-			else if(transTabDei->getBitU(tpr[i].virtualPage) == 0 && tpr[i].locked == false) {
-				tpr[i].locked = true;
-				tpr[i].owner = g_current_thread->GetProcessOwner()->addrspace;
-				if(transTabDei->getBitM(tpr[i].virtualPage) == 1) {
-					if(transTabDei->getBitSwap(tpr[i].virtualPage) == 1) {
-						g_swap_manager->PutPageSwap(transTabDei->getAddrDisk(tpr[i].virtualPage), (char*)&g_machine->mainMemory[i*taillePage]);
+			else if(transTabDei->getBitU(tpr[local_i_clock].virtualPage) == 0 && tpr[local_i_clock].locked == false) {
+				tpr[local_i_clock].locked = true;
+				tpr[local_i_clock].owner = g_current_thread->GetProcessOwner()->addrspace;
+				if(transTabDei->getBitM(tpr[local_i_clock].virtualPage) == 1) {
+					if(transTabDei->getBitSwap(tpr[local_i_clock].virtualPage) == 1) {
+						g_swap_manager->PutPageSwap(transTabDei->getAddrDisk(tpr[local_i_clock].virtualPage), (char*)&g_machine->mainMemory[local_i_clock*taillePage]);
 					}
 					else {
-						int addrDisk = g_swap_manager->PutPageSwap(-1, (char*)&g_machine->mainMemory[i*taillePage]);
-						printf("addrDisk = %d\n", addrDisk);
-						transTabDei->setAddrDisk(tpr[i].virtualPage, addrDisk);
+						int addrDisk = g_swap_manager->PutPageSwap(-1, (char*)&g_machine->mainMemory[local_i_clock*taillePage]);
+						//printf("addrDisk = %d\n", addrDisk);
+						transTabDei->setAddrDisk(tpr[local_i_clock].virtualPage, addrDisk);
+						transTabDei->setBitSwap(tpr[local_i_clock].virtualPage);
 					}
-					transTabDei->clearBitValid(tpr[i].virtualPage);
 				}
 				boolean = 0;
 			}
+			else if (tpr[local_i_clock].locked == true) {
+				compteurLockedPage++;
+				if(compteurLockedPage == g_cfg->NumPhysPages && compteurtourDeBoucle == 0) {
+					g_current_thread->Yield();
+				}
+			}
 		}
-		result = i;
-		i++;
-		i = i%g_cfg->NumPhysPages;
+		result = local_i_clock;
+		local_i_clock++;
+		local_i_clock = local_i_clock%g_cfg->NumPhysPages;
+		this->i_clock = local_i_clock;
+		if(local_i_clock == 0) {
+			compteurtourDeBoucle++;
+		}
 	}
+	
+	transTabDei->clearBitValid(tpr[result].virtualPage);
+	//printf("fin de fct\n");
 	return result;
 	#endif
 	#ifndef ETUDIANTS_TP
