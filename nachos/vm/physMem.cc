@@ -133,6 +133,7 @@ int PhysicalMemManager::AddPhysicalToVirtualMapping(AddrSpace* owner,int virtual
 		g_machine->mmu->translationTable->setPhysicalPage(virtualPage, PageReel);
 		//printf("getpp = %d\n", g_machine->mmu->translationTable->getPhysicalPage(virtualPage));
 		g_machine->mmu->translationTable->setBitValid(virtualPage);
+		g_physical_mem_manager->UnlockPage(PageReel);
 		return PageReel;
 		
 	#endif
@@ -185,14 +186,14 @@ int PhysicalMemManager::FindFreePage() {
 //-----------------------------------------------------------------
 int PhysicalMemManager::EvictPage() {
 	#ifdef ETUDIANTS_TP
-	//printf("/**********************************************************************/\n");
+	printf("/**********************************************************************/\n");
 	if(this->i_clock == -1){
 		this->i_clock = 0;
 	}
 	int local_i_clock = this->i_clock;
-	/*printf("Dans thread = %s\n", g_current_thread->GetName());
+	printf("Dans thread = %s\n", g_current_thread->GetName());
 	printf("i_clock = %d\n", this->i_clock);
-	printf("local_i_clock = %d\n", local_i_clock);*/
+	printf("local_i_clock = %d\n", local_i_clock);
 	int compteurLockedPage = 0;
 	int compteurtourDeBoucle = 0;
 	int taillePage = g_cfg->PageSize;
@@ -242,6 +243,7 @@ int PhysicalMemManager::EvictPage() {
 	}
 	transTabDei->clearBitValid(tpr[result].virtualPage);
 	return result;
+
 	#endif
 	#ifndef ETUDIANTS_TP
   printf("**** Warning: page replacement algorithm is not implemented yet\n");

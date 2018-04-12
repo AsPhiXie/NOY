@@ -216,6 +216,7 @@ AddrSpace::AddrSpace(OpenFile * exec_file, Process *p, int *err)
 	  }
 	  else {
 	  	memset(&(g_machine->mainMemory[translationTable->getPhysicalPage(virt_page)*g_cfg->PageSize]), 0, g_cfg->PageSize);
+			translationTable->setAddrDisk(virt_page,-1);
 	  }
 	  #endif
 	  /* End of code without demand paging */
@@ -358,8 +359,21 @@ int AddrSpace::Alloc(int numPages)
 // ----------------------------------------------------------------------
 int AddrSpace::Mmap(OpenFile *f, int size)
 {
+	#ifndef ETUDIANTS_TP
   printf("**** Warning: method AddrSpace::Mmap is not implemented yet\n");
   exit(-1);
+	#endif
+	#ifdef ETUDIANTS_TP
+	int tailleAlloc = size/g_cfg->PageSize;
+	int page = Alloc(tailleAlloc);
+	s_mapped_file* nouveau = new s_mapped_file;
+	nouveau->file = f;
+	nouveau->size = f->Length();
+	//nouveau.first_address = ??
+	this->mapped_files[this->nb_mapped_files] = *nouveau;
+	this->nb_mapped_files++;
+	#endif
+
 }
 
 //----------------------------------------------------------------------

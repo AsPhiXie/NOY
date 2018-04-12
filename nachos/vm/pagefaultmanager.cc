@@ -71,7 +71,6 @@ ExceptionType PageFaultManager::PageFault(uint32_t virtualPage) {
   			memcpy(&g_machine->mainMemory[pageReel* taillePage], bufSwap, BytesLu);
   		}
   		g_machine->mmu->translationTable->clearBitIo(virtualPage);
-  		g_physical_mem_manager->UnlockPage(pageReel);
   	}
   	return NO_EXCEPTION;
 }
