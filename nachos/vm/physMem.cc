@@ -191,57 +191,72 @@ int PhysicalMemManager::EvictPage() {
 		this->i_clock = 0;
 	}
 	int local_i_clock = this->i_clock;
-	printf("Dans thread = %s\n", g_current_thread->GetName());
+	printf("Dans thread debut = %s\n", g_current_thread->GetName());
 	printf("i_clock = %d\n", this->i_clock);
-	printf("local_i_clock = %d\n", local_i_clock);
+	// je change le iclock_local par iclock
+	// probleme bit valid remis a zero je sais pas ou 
 	int compteurLockedPage = 0;
 	int compteurtourDeBoucle = 0;
 	int taillePage = g_cfg->PageSize;
 	AddrSpace* addrSpaceLocal = g_current_thread->GetProcessOwner()->addrspace;
 	int result = 0;
-	AddrSpace* addrSpace = tpr[local_i_clock].owner;
-	TranslationTable* transTabDei = tpr[local_i_clock].owner->translationTable;
+	AddrSpace* addrSpace = tpr[this->i_clock].owner;
+	TranslationTable* transTabDei = tpr[this->i_clock].owner->translationTable;
 	//1er tour de table
 	int boolean = 1;
 	while(boolean) {
 		if(&addrSpace != &addrSpaceLocal) {
 			//On met les bits U à 0 si ils sont égales à 1
-			if(transTabDei->getBitU(tpr[local_i_clock].virtualPage) == 1) {
-				transTabDei->clearBitU(tpr[local_i_clock].virtualPage);
+			if(transTabDei->getBitU(tpr[this->i_clock].virtualPage) == 1) {
+				transTabDei->clearBitU(tpr[this->i_clock].virtualPage);
 			}
-			else if(transTabDei->getBitU(tpr[local_i_clock].virtualPage) == 0 && tpr[local_i_clock].locked == false) {
-				tpr[local_i_clock].locked = true;
-				tpr[local_i_clock].owner = g_current_thread->GetProcessOwner()->addrspace;
-				if(transTabDei->getBitM(tpr[local_i_clock].virtualPage) == 1) {
-					if(transTabDei->getBitSwap(tpr[local_i_clock].virtualPage) == 1) {
-						g_swap_manager->PutPageSwap(transTabDei->getAddrDisk(tpr[local_i_clock].virtualPage), (char*)&g_machine->mainMemory[local_i_clock*taillePage]);
+			else if(transTabDei->getBitU(tpr[this->i_clock].virtualPage) == 0 && tpr[this->i_clock].locked == false) {
+				tpr[this->i_clock].locked = true;
+				tpr[this->i_clock].owner = g_current_thread->GetProcessOwner()->addrspace;
+				if(transTabDei->getBitM(tpr[this->i_clock].virtualPage) == 1) {
+					// sauver local iclock ici.
+					printf("je pars dans getbitswap \n");
+					local_i_clock = this->i_clock;
+					printf("local_i_clock = %d\n", local_i_clock);
+					if(transTabDei->getBitSwap(tpr[this->i_clock].virtualPage) == 1) {// Le putPageswap peut nous envoye en sommeil donc il faut sauver le local iclock avant.
+						printf("par le if \n");
+						g_swap_manager->PutPageSwap(transTabDei->getAddrDisk(tpr[this->i_clock].virtualPage), (char*)&g_machine->mainMemory[this->i_clock*taillePage]);
 					}
 					else {
-						int addrDisk = g_swap_manager->PutPageSwap(-1, (char*)&g_machine->mainMemory[local_i_clock*taillePage]);
+						printf("par le else \n");
+						int addrDisk = g_swap_manager->PutPageSwap(-1, (char*)&g_machine->mainMemory[this->i_clock*taillePage]);
 						//printf("addrDisk = %d\n", addrDisk);
-						transTabDei->setAddrDisk(tpr[local_i_clock].virtualPage, addrDisk);
-						transTabDei->setBitSwap(tpr[local_i_clock].virtualPage);
+						transTabDei->setAddrDisk(tpr[this->i_clock].virtualPage, addrDisk);
+						transTabDei->setBitSwap(tpr[this->i_clock].virtualPage);
 					}
+					this->i_clock = local_i_clock;
+					printf("i_clock  après pageSwap = %d\n", this->i_clock);
 				}
+				printf("je suis passer par la \n");
 				boolean = 0;
 			}
-			else if (tpr[local_i_clock].locked == true) {
+			else if (tpr[this->i_clock].locked == true) {
 				compteurLockedPage++;
 				if(compteurLockedPage == g_cfg->NumPhysPages && compteurtourDeBoucle == 0) {
 					g_current_thread->Yield();
 				}
 			}
 		}
-		result = local_i_clock;
-		local_i_clock++;
-		local_i_clock = local_i_clock%g_cfg->NumPhysPages;
-		//printf("local_i_clock = %d\n", local_i_clock);
-		this->i_clock = local_i_clock;
-		if(local_i_clock == 0) {
+		result = this->i_clock;
+		this->i_clock++;
+		this->i_clock = this->i_clock % g_cfg->NumPhysPages;
+		//this->i_clock = local_i_clock;
+		printf("Dans thread fin = %s\n", g_current_thread->GetName());
+		printf("i_clock = %d\n", this->i_clock);
+		
+		if(this->i_clock == 0) {
 			compteurtourDeBoucle++;
 		}
+	 	addrSpace = tpr[this->i_clock].owner;
+	 	transTabDei = tpr[this->i_clock].owner->translationTable;
 	}
 	transTabDei->clearBitValid(tpr[result].virtualPage);
+	printf("result = %d\n", result);
 	return result;
 
 	#endif
