@@ -212,7 +212,6 @@ AddrSpace::AddrSpace(OpenFile * exec_file, Process *p, int *err)
 	  translationTable->clearBitValid(virt_page);
 	  if (section_table[i].sh_type != SHT_NOBITS) {
 	  	translationTable->setAddrDisk(virt_page, section_table[i].sh_offset + pgdisk*g_cfg->PageSize);
-	  	//printf("addrDisk = %x\n", section_table[i].sh_offset + pgdisk*g_cfg->PageSize);
 	  }
 	  else {
 	  	memset(&(g_machine->mainMemory[translationTable->getPhysicalPage(virt_page)*g_cfg->PageSize]), 0, g_cfg->PageSize);

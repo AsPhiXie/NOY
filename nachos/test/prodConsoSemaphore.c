@@ -13,9 +13,9 @@ void producteur() {
   int i = 0;
   while(i < 10) {
     P(vide);
-    /*if(i == 3) {
+    if(i == 3) {
       i = i%3;
-    }*/
+    }
     buffer[i] = 1;
     i++;
     V(plein);
@@ -26,9 +26,9 @@ void consommateur() {
   int j = 0;
   while(j < 10) {
     P(plein);
-   /* if(j == 3) {
+    if(j == 3) {
       j = j%3;
-    }*/
+    }
     buffer[j] = 0;
     j++;
     V(vide);

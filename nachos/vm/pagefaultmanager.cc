@@ -49,7 +49,6 @@ ExceptionType PageFaultManager::PageFault(uint32_t virtualPage) {
 		bitIO = g_machine->mmu->translationTable->getBitIo(virtualPage);
 	}
 	int bitV = g_machine->mmu->translationTable->getBitValid(virtualPage);
-	//printf("bit read allowed = %d\n", g_machine->mmu->translationTable->getBitReadAllowed(virtualPage));
 	if(bitV == 0) {
   		int pageReel = g_physical_mem_manager->AddPhysicalToVirtualMapping(g_current_thread->GetProcessOwner()->addrspace, virtualPage);
 			int bitSwap = g_machine->mmu->translationTable->getBitSwap(virtualPage);
@@ -66,9 +65,7 @@ ExceptionType PageFaultManager::PageFault(uint32_t virtualPage) {
   		}
   		else if(bitSwap == 0 && addrDisk > -1){
   			OpenFile* file = g_current_thread->GetProcessOwner()->exec_file;
-  			//printf("addrDisk = %d\n", addrDisk);
   			int BytesLu = file->ReadAt(bufSwap, taillePage, addrDisk);
-  			//printf("byteslu = %d\n", BytesLu);
   			memcpy(&g_machine->mainMemory[pageReel* taillePage], bufSwap, BytesLu);
   		}
   		g_machine->mmu->translationTable->clearBitIo(virtualPage);
